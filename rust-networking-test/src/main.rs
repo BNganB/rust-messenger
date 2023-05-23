@@ -1,11 +1,14 @@
 use std::io::{self, Write};
 use colored::*;
+use std::process::Command;
 
-struct User<T>
-where
-    T: AsRef<str>
-{
-    user_name: T,
+fn main() {
+    get_user_creds();
+    make_connection(get_connection_info());
+}
+
+struct User {
+    user_name: String,
     colour: (u8, u8, u8),
 }
 
@@ -31,39 +34,35 @@ fn get_user_creds() {
     io::stdin()
         .read_line(&mut r)
         .expect("Failed to read input");
+    let processed_r: u8 = r.trim().parse::<u8>().expect("Failed to parse R");
 
     print!("User colour setup (RGB) - G: ");
     io::stdout().flush().expect("Failed to flush stdout");
     io::stdin()
         .read_line(&mut g)
         .expect("Failed to read input");
+    let processed_g: u8 = g.trim().parse::<u8>().expect("Failed to parse G");
 
     print!("User colour setup (RGB) - B: ");
     io::stdout().flush().expect("Failed to flush stdout");
     io::stdin()
         .read_line(&mut b)
         .expect("Failed to read input");
-
-    let r: u8 = r.trim().parse().expect("Failed to parse input");
-    let g: u8 = g.trim().parse().expect("Failed to parse input");
-    let b: u8 = b.trim().parse().expect("Failed to parse input");
-    rgb_check(r, g, b);
+    let processed_b: u8 = b.trim().parse::<u8>().expect("Failed to parse B");
 
     let current_user = User {
-        user_name: s,
-        colour: (r, g, b),
+        user_name: s.trim().to_string(),
+        colour: (processed_r, processed_g, processed_b),
     };
-    println!("Welcome {}!", current_user.user_name.truecolor((current_user.colour.0),(current_user.colour.1), (current_user.colour.2)));
+    println!(
+        "Welcome {}!",
+        current_user
+            .user_name
+            .truecolor(current_user.colour.0, current_user.colour.1, current_user.colour.2)
+    );
 }
 
-
-fn rgb_check(r: u8, g: u8, b: u8) {
-    let r = if r > 255 { 255 } else { r };
-    let g = if g > 255 { 255 } else { g };
-    let b = if b > 255 { 255 } else { b };
-}
-
-fn get_connection_info() {
+pub fn get_connection_info() -> (String, usize) {
     let mut ip = String::new();
     print!("Please enter the server ip: ");
     io::stdout().flush().expect("Failed to flush stdout");
@@ -77,16 +76,27 @@ fn get_connection_info() {
     io::stdin()
         .read_line(&mut port)
         .expect("Failed to read input");
+
+    let port = port.trim().parse::<usize>().expect("Failed to parse port");
+
+    (ip.trim().to_string(), port)
+}
+
+fn make_connection((ip, port): (String, usize)) {
+    let current_connection = Connection { ip, port };
+    let command = format!("nc localhost {}", current_connection.port);  //change from localhost later
+
+    println!("Establishing connection...");
+
+    
+
+    let output = Command::new("sh")
+    .arg("-c")
+    .arg(command)
+    .output()
+    .expect("Failed to connect");
+
+    io::stdout().write_all(&output.stdout).unwrap()
 }
 
 
-
-
-
-
-
-
-
-fn main() {
-    get_user_creds();
-}
