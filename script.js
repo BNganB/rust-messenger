@@ -17,7 +17,7 @@ var STATE = {
   connected: false,
 }
 
-// Generate a color from a "hash" of a string. Thanks, internet.
+// hash string to get default user colour
 function hashColor(str) {
   let hash = 0;
   for (var i = 0; i < str.length; i++) {
@@ -28,8 +28,7 @@ function hashColor(str) {
   return `hsl(${hash % 360}, 100%, 70%)`;
 }
 
-// Add a new room `name` and change to it. Returns `true` if the room didn't
-// already exist and false otherwise.
+// check if room exists already, if no create room
 function addRoom(name) {
   if (STATE[name]) {
     changeRoom(name);
@@ -48,7 +47,6 @@ function addRoom(name) {
   return true;
 }
 
-// Change the current room to `name`, restoring its messages.
 function changeRoom(name) {
   if (STATE.room == name) return;
 
@@ -67,8 +65,7 @@ function changeRoom(name) {
   STATE[name].forEach((data) => addMessage(name, data.username, data.message))
 }
 
-// Add `message` from `username` to `room`. If `push`, then actually store the
-// message. If the current room is `room`, render the message.
+// format message and display if room == current room
 function addMessage(room, username, message, push = false) {
   if (push) {
     STATE[room].push({ username, message })
@@ -83,7 +80,7 @@ function addMessage(room, username, message, push = false) {
   }
 }
 
-// Subscribe to the event source at `uri` with exponential backoff reconnect.
+// hook into event stream and start listening
 function subscribe(uri) {
   var retryTime = 1;
 
@@ -118,20 +115,18 @@ function subscribe(uri) {
   connect(uri);
 }
 
-// Set the connection status: `true` for connected, `false` for disconnected.
 function setConnectedStatus(status) {
   STATE.connected = status;
   statusDiv.className = (status) ? "connected" : "reconnecting";
 }
 
-// Let's go! Initialize the world.
 function init() {
-  // Initialize some rooms.
+  // make initial rooms
   addRoom("lobby");
   changeRoom("lobby");
   addMessage("lobby", "Admin", "This is an example messenger built in rust, enter your name and try making a new room!", true);
 
-  // Set up the form handler.
+  // format message jsons
   newMessageForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
@@ -150,7 +145,7 @@ function init() {
     }
   })
 
-  // Set up the new room handler.
+  // make new room
   newRoomForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
@@ -160,10 +155,10 @@ function init() {
     roomNameField.value = "";
     if (!addRoom(room)) return;
 
-    addMessage(room, "Rocket", `Look, your own "${room}" room! Nice.`, true);
+    addMessage(room, "Automated Server Message", `Look, your own "${room}" room! Nice.`, true);
   })
 
-  // Subscribe to server-sent events.
+  // allow server wide messages to be seen by all users
   subscribe("/events");
 }
 
