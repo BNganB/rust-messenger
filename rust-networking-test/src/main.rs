@@ -21,8 +21,8 @@ struct Message {
     pub message: String,
 }
 
-/// Returns an infinite stream of server-sent events. Each event is a message
-/// pulled from a broadcast queue sent by the `post` handler.
+/// 1 event = 1 message
+/// pulled from a broadcast queue sent by post handler
 #[get("/events")]
 async fn events(queue: &State<Sender<Message>>, mut end: Shutdown) -> EventStream![] {
     let mut rx = queue.subscribe();
@@ -42,7 +42,7 @@ async fn events(queue: &State<Sender<Message>>, mut end: Shutdown) -> EventStrea
     }
 }
 
-/// Receive a message from a form submission and broadcast it to any receivers.
+/// broadcast to clients
 #[post("/message", data = "<form>")]
 fn post(form: Form<Message>, queue: &State<Sender<Message>>) {
     // A send 'fails' if there are no active subscribers. That's okay.
